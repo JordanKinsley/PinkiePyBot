@@ -20,12 +20,12 @@ hello.rule = r'(?i)(hi|hello|hey) $nickname\b'
 def sniff(phenny, input): 
    sniffresponse = random.choice(('Yeah... Don\'t do that...', 'Umm...', 'Do I smell funny or something?', 'Cut that out.', 'ACTION smacks ' + input.nick + '\'s nose.'))
    phenny.say(sniffresponse)
-sniff.rule = r'(ACTION sniffs $nickname*)'
+sniff.rule = r'(?i)(ACTION sniffs $nickname*)'
 
 def grope(phenny, input): 
    groperesponse = random.choice(('Hey! Don\'t touch me there!', 'ACTION uses Flamethrower on ' + input.nick + '!', 'ACK!', 'Keep your hands off me!', 'It would probably be best if you didn\'t touch me there again.', 'How about you don\'t touch me there again and I won\'t burn your flesh off.'))
    phenny.say(groperesponse)
-grope.rule = r'(ACTION runs over and squeezes $nickname*)'
+grope.rule = r'(?i)(ACTION runs over and squeezes $nickname*)'
 
 def supereffective(phenny, input): 
    supereffectiveresponse = random.choice(('ACTION cries.', 'Owwwwww...', 'Ouch! That huuuuuurts....', 'Please don\'t do that...', 'ACTION screams.', 'Why did you do thaaaaat?'))
@@ -53,9 +53,9 @@ def healpulse(phenny, input):
 healpulse.rule = r'ACTION uses Heal Pulse on $nickname*'
 
 def flirt(phenny, input): 
-     attractresponse = random.choice(('I don\'t like you that way...', 'kfrry', 'Flattering, but no.', 'Are you trying to flirt with me?', 'I\'d rather just be friends.', '...'))
+     attractresponse = random.choice(('I don\'t like you that way...', 'Sorry, I\'m not like that.', 'Flattering, but no.', 'Are you trying to flirt with me?', 'I\'d rather just be friends.', '...'))
      phenny.say(attractresponse)
-flirt.rule = r'ACTION uses (Attract|Captivate) on $nickname*'
+flirt.rule = r'(?i)(ACTION uses (Attract|Captivate) on $nickname*)'
 
 def attacked(phenny, input): 
    attackedresponse = random.choice(('ACTION uses Protect!', 'Ouch!', 'ACTION uses Flamethrower on ' + input.nick + '!', 'ACTION uses Night Daze on ' + input.nick + '!', 'ACTION uses Extrasensory on ' + input.nick + '!', 'ACTION uses Counter on ' + input.nick + '!'))
@@ -64,26 +64,33 @@ attacked.rule = r'ACTION uses (Dragon Pulse|Metal Claw|ExtremeSpeed|Quick Attac
 
 
 def lick(phenny, input): 
-   if input.nick != 'SageGriffin':
-      lickresponse = random.choice(('.', 'Ah!', 'Eep!', 'I\'ll rip out your tongue if you keep doing that.', 'ACTION rips out ' + input.nick + '\'s tongue.', 'I don\'t like you that way.', 'Eww...','Waugh...', 'Ah!', '!', 'ACTION blushes.', 'ACTION pounces ' + input.nick + '.', 'ACTION steals ' + input.nick + '\'s virginity.', 'Hee...'))
+   lickresponse = random.choice(('.', 'Ah!', 'Eep!', 'I\'ll rip out your tongue if you keep doing that.', 'ACTION rips out ' + input.nick + '\'s tongue.', 'I don\'t like you that way.', 'Eww...','Waugh...', 'Ah!', '!', 'ACTION blushes.', 'ACTION pounces ' + input.nick + '.', 'ACTION steals ' + input.nick + '\'s virginity.', 'Hee...'))
    phenny.say(lickresponse)
-lick.rule = r'(ACTION licks $nickname*)'
+lick.rule = r'(?i)(ACTION licks $nickname*)'
 
 def growl(phenny, input): 
    growlresponse = random.choice(('Bad dog! Don\'t do that.', 'ACTION smacks ' + input.nick + ' with a newspaper.', 'What did I do?', 'ACTION growls back.', 'Something wrong?'))
    phenny.say(growlresponse)
-growl.rule = r'(ACTION growls at $nickname*)'
+growl.rule = r'(?i)(ACTION growls at $nickname*)'
 
 def kiss(phenny, input):
     kissresponse = random.choice(('ACTION blushes','ACTION kisses back','ACTION smacks ' + input.nick + '!'))
     phenny.say(kissresponse)
-kiss.rule = r'(ACTION kisses $nickname*)'
+kiss.rule = r'(?i)(ACTION kisses $nickname*)'
 
 def interjection(phenny, input): 
    phenny.say(input.nick + '!')
 interjection.rule = r'$nickname!'
 interjection.priority = 'high'
 interjection.thread = False
+
+'''
+Actions to add:
+* hugs
+* pokes
+* party
+* cupcakes
+'''
 
 if __name__ == '__main__': 
    print __doc__.strip()

@@ -26,7 +26,7 @@ def part(phenny, input):
    if input.sender.startswith('#'): return
    if input.admin: 
       phenny.write(['PART'], input.group(2))
-part.commands = ['part']
+part.commands = ['part','leave']
 part.priority = 'low'
 part.example = '.part #example'
 
@@ -38,7 +38,7 @@ def quit(phenny, input):
       phenny.write(['QUIT'])
       __import__('os')._exit(0)
 quit.commands = ['quit']
-quit.priority = 'low'
+quit.priority = 'high'
 
 def msg(phenny, input): 
    # Can only be done in privmsg by an admin

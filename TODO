@@ -1,0 +1,8 @@
+Add new actions to ping.py
+	Move current actions to their own module
+Add more ponies to the list of admins (in ~/.pinkie/default.py)
+Refactor phenny to pinkie in all places
+	Test all name changes and make sure everything still shakes out OK. 
+Add a module to respond to shortened nicknames from a list. 
+	Extra testing for use with the tell and actions modules. 
+

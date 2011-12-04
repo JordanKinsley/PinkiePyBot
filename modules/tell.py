@@ -146,7 +146,7 @@ def message(phenny, input):
    if len(phenny.reminders.keys()) != remkeys: 
       dumpReminders(phenny.tell_filename, phenny.reminders) # @@ tell
 message.rule = r'(.*)'
-message.priority = 'low'
+message.priority = 'high' # We want to make sure messages are taken care of before anything else. 
 
 if __name__ == '__main__': 
    print __doc__.strip()
