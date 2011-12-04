@@ -11,7 +11,7 @@ import os, re, time, threading
 
 def filename(self): 
    name = self.nick + '-' + self.config.host + '.reminders.db'
-   return os.path.join(os.path.expanduser('~/.phenny'), name)
+   return os.path.join(os.path.expanduser('~/.pinkie'), name)
 
 def load_database(name): 
    data = {}
