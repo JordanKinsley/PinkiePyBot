@@ -5,4 +5,6 @@ Refactor phenny to pinkie in all places
 	Test all name changes and make sure everything still shakes out OK. 
 Add a module to respond to shortened nicknames from a list. 
 	Extra testing for use with the tell and actions modules. 
-
+Add remote update-and-restart commands
+	Pull latest (tagged) source from git, look at changes, reload modules that changed or completely restart if main files changed. 
+See about adding oat.nu support to url.py
