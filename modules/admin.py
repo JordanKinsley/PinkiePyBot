@@ -76,5 +76,24 @@ def me(phenny, input):
 me.rule = (['me'], r'(#?\S+) (.*)')
 me.priority = 'low'
 
+def silence(phenny, input):
+    '''.silence <+|-><hostmask> <options> - server-side silence command'''
+    # This might only work for Canternet. Check your network's help for /silence
+    # TODO: add a text file with a list of silenced nicks to be loaded on connect
+    if input.sender.startswith('#'):
+        return
+    if input.admin:
+        if not input.groups():
+            phenny.write(['SILENCE'])
+        hostmask = input.group(1)
+        options = input.group(2)
+        phenny.write(['SILENCE', hostmask, options])
+silence.commands = ['silence']
+silenece.priority = 'high'
+
+def silence_reply(phenny, input):
+    phenny.msg(phenny.config.owner, input.groups())
+silence_reply.event = '272'
+
 if __name__ == '__main__': 
     print(__doc__.strip())
