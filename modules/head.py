@@ -136,6 +136,8 @@ def snarfuri(phenny, input):
         if re.compile('http(s)?://(www.)?derpiboo((.ru)|(ru.org))(/images)?/').match(uri):
             title = derpibooru(uri)
 
+        if re.compile('http(s)?://(www.)?redd(.it|it.com)/').match(uri):
+            title = reddit(uri)
         if title:
             phenny.msg(input.sender, '[ ' + title + ' ]')
         else:
@@ -433,6 +435,10 @@ def get_story_title(uri):
     title = title + " - " + views + " views - " + categories + ' - ' + words + ' words'
     title = title + " - Likes: " + likes + " - Dislikes: " + dislikes + " - " + percentage + "%"
     return title
+
+def reddit(uri):
+    #initial commit
+    return uri
 
 if __name__ == '__main__': 
     print(__doc__.strip())
