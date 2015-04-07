@@ -20,6 +20,10 @@ from datetime import timedelta
 from html.entities import name2codepoint
 import web
 from tools import deprecated
+try: 
+    import reddit
+except: 
+    pass
 
 cj = http.cookiejar.LWPCookieJar(os.path.join(os.path.expanduser('~/.phenny'), 'cookies.lwp'))
 opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
@@ -137,7 +141,7 @@ def snarfuri(phenny, input):
             title = derpibooru(uri)
 
         if re.compile('http(s)?://(www.)?redd(.it|it.com)/').match(uri):
-            title = reddit(uri)
+            title = reddit_post(uri)
         if title:
             phenny.msg(input.sender, '[ ' + title + ' ]')
         else:
@@ -436,9 +440,14 @@ def get_story_title(uri):
     title = title + " - Likes: " + likes + " - Dislikes: " + dislikes + " - " + percentage + "%"
     return title
 
-def reddit(uri):
-    #initial commit
-    return uri
+def reddit_post(uri):
+    # initial commit
+    if reddit:
+        post_title, short_link, upvotes, downvotes, subreddit, link_domain = reddit.post_info(uri)
+        title = subreddit + ': ' + post_title + ' (' + link_domain + ') ' + upvotes + downvotes + ' (' + short_link ')'
+    else:
+        title = gettitle(uri)
+    return title
 
 if __name__ == '__main__': 
     print(__doc__.strip())
