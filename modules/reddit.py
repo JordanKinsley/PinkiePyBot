@@ -8,6 +8,13 @@ Additionally, if a config option is present, it will periodically check
 whatever subreddit(s) is defined and post new comments/links to channel
 '''
 
+'''
+new config options that must be defined to use this module:
+reddit_user = '<your username>'
+subreddits = ['<your subreddit 1>','<friend's subreddit>','<your other subreddit>']
+sr_check_frequency = ('<some float>','<period of time, e.g. hour, day, second>')
+'''
+
 def post_info(uri):
     '''
     IRC formatting codes primer adapted from https://github.com/myano/jenni/wiki/IRC-String-Formatting
