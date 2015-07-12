@@ -416,7 +416,7 @@ def ouroboros(site, uri):
     else:
         filtered = re.sub("\\b(("+")|(".join(boru.ignore_tags)+"))\\b","",tags)
         filtered = re.sub(" +"," ",filtered).strip()
-    title = re.sub('_'," ",filtered)
+    # title = re.sub('_'," ",filtered)
     title = '{0} {1}'.format(rating.capitalize(),title)
     return title
 
@@ -455,8 +455,8 @@ def derpibooru(uri):
         print("Error loading ignore tags: %s (in head.py)" %(e))
     else:
         tags = [tag for tag in tags if tag not in boru.ignore_tags]
-    tag_string = ' '.join(tag.replace(' ', '_') for tag in tags)
-    title = '{0} {1}'.format(ratings.title(),tag_string,artists)
+    # tag_string = ' '.join(tag.replace(' ', '_') for tag in tags)
+    title = '{0} {1}'.format(ratings.title(),tags,artists)
     return title
 
 def get_story_title(uri):
