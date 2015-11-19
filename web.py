@@ -11,7 +11,7 @@ import json as jsonlib
 
 class Grab(urllib.request.URLopener): 
     def __init__(self, *args): 
-        self.version = 'Mozilla/5.0 (Phenny)'
+        self.version = 'Mozilla/5.0 (CompuBot)'
         urllib.request.URLopener.__init__(self, *args)
     def http_error_default(self, url, fp, errcode, errmsg, headers): 
         return urllib.addinfourl(fp, [headers, errcode], "http:" + url)
@@ -72,6 +72,9 @@ def quote(text):
 
 def decode(html): 
     return r_entity.sub(entity, html)
+
+def unquote(text):
+     return urllib.parse.unquote(text)
 
 r_string = re.compile(r'("(\\.|[^"\\])*")')
 r_json = re.compile(r'^[,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]+$')

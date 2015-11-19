@@ -12,7 +12,7 @@ import os, sqlite3, re
 
 # The regular expression that matches any of http: , https: , ftp: , and ftps: 
 # as well as .jpg, .png, .gif, and .jpeg. 
-url_re = re.compile('(ht|f)tp(s)?://.*.(jpg|png|gif|jpeg)')
+url_re = re.compile('(ht|f)tp(s)?://.*')
 
 def t_connect(db):
 	return sqlite3.connect(db, check_same_thread = False)
@@ -27,7 +27,7 @@ def setup(self):
 		nick		varchar(255),
 		character	varchar(255),
 		url			text,
-		unique(character) on conflict replace
+		unique(character, channel) on conflict replace
     );''')
     c.close()
     self.img_conn.commit()
@@ -74,17 +74,37 @@ store.thread = False
 
 def add(phenny, input):
     '''.add [<character>] <image url> - Adds an image URL for a given character. 
-    The URL must end in a .jpg, .png, or .gif'''
+    The URL must have http in it.'''
     if not input.sender.startswith('#'): 
         phenny.reply('This is a channel-only command. Please try again in a channel.')
     channel = input.sender
     nick = input.nick
+    
     # get the url from the input
     try: 
         character, url = input.group(2).split()
     except ValueError: 
         url = input.group(2)
         character = nick
+        
+    # check if character already exists
+    sqlitedata = {'character': character, 'channel': channel}
+    add.conn = t_connect(phenny.img_db)
+    c = add.conn.cursor()
+    c.execute('''
+    select * from character_images where channel = :channel 
+            and character = :character;
+    ''', sqlitedata)
+    result = c.fetchone()
+    c.close()
+    add.conn.close()
+    if result:
+        # character exists, need to verify nick
+        n = result[1]
+        if n != nick:
+            phenny.say(n + " already owns that character, sorry!")
+            return False
+        
     if not url:
         if not verify_url(character):
             phenny.say(add.__doc__.strip() + ' You may have entered an invalid URL.') 
@@ -101,20 +121,18 @@ def add(phenny, input):
 add.commands = ['add']
 add.thread = False
 add.priority = 'low'
+add.conn = None
 
 def remove(phenny, channel, nick, character):
     sqlitedata = {
         'channel': channel,
-        'nick': nick,
         'character': character,
     }
-    if not remove.conn:
-        remove.conn = t_connect(phenny.img_db)
+    remove.conn = t_connect(phenny.img_db)
     
     c = remove.conn.cursor()
     c.execute('''
-        delete from character_images where character = :character 
-            and nick = :nick 
+        delete from character_images where character = :character
             and channel = :channel;
     ''', sqlitedata)
     c.close()
@@ -124,32 +142,47 @@ remove.conn = None
 remove.thread = False
 
 def verify_nick(phenny, channel, nick, character):
-    sqlitedata = {
-        'channel': channel,
-        'nick': nick,
-        'character': character,
-    }
+    try:
+        sqlitedata = {
+            'channel': channel,
+            'character': character,
+        }
     
-    verify = False
+        verify = False
     
-    if not verify_nick.conn:
         verify_nick.conn = t_connect(phenny.img_db)
     
-    c = verify_nick.conn.cursor()
-    c.execute('''
-        select from character_images where channel = :channel 
-            and nick = :nick and character = :character;
-    ''', sqlitedata)
+        c = verify_nick.conn.cursor()
+        c.execute('''
+        select nick from character_images where channel = :channel 
+            and character = :character;
+        ''', sqlitedata)
     # we should only fetch one record since the characters are unique. 
     # if no record was retrieved, we'll default to no verification, and 
     # the delete can't proceed.
-    if c.fetchone():
-        verify = True
-    c.close()
-    verify_nick.conn.close()
-    return verify
+        result = c.fetchone()
+        if result is not None and result[0] == nick:
+            verify = True
+        c.close()
+        verify_nick.conn.close()
+        return verify
+    except SyntaxError:
+        phenny.say("I'm sorry but you're not authorized to delete " + character + ", if you own the link then make sure you're using the nick \"" + nick + "\".")
+        return verify
 verify_nick.conn = None
 verify_nick.thread = False
+
+def get_character(phenny, character, channel):
+    '''Look up a character in the database and return a tuple,
+    (channel, nick, character, url)'''
+    sqlitedata = {'channel':channel, 'character':character}
+    conn = t_connect(phenny.img_db)
+    cur = conn.cursor()
+    cur.execute('''
+    select * from character_images where channel = :channel
+        and character = :character;
+    ''', sqlitedata)
+    return cur.fetchone()
 
 def delete(phenny, input):
     '''.del <character> - Removes the character's image from the database. 
@@ -157,20 +190,28 @@ def delete(phenny, input):
     channel = input.sender
     nick = input.nick
     character = input.group(2)
+    
+    char_entry = get_character(phenny, character, channel)
+    if char_entry is None:
+        phenny.say("Sowwy, but I don't remember anything by that name! Are you sure that you stored it? Pwease don't be mad at me! :(")
+        return
+    else:
+        owner = char_entry[1]
+    
     # admins can delete any image they want
     if input.admin:
         if remove(phenny, channel, nick, character):
-            phenny.say('!!ADMIN!! deleted the image for ' + character + ' owned by ' + nick + ' from the database.')
+            phenny.say('!!ADMIN!! deleted the image for ' + character + ' owned by ' + owner + ' from the database.')
             return
         else: 
             phenny.say('Oh SHIT! Something went wrong!')
     else: 
         if not verify_nick(phenny, channel, nick, character):
-            phenny.reply('You can\'t delete a row that doesn\'t belong to you. Please contact a channel admin for assistance.')
+            phenny.say("I'm afraid I can't do that, " + nick + ", you're not authorized to delete " + character + ", if you own the link then make sure you're using the nick \"" + owner + "\" you used when you created " + character + ".")
             return
         else:
             if remove(phenny, channel, nick, character):
-                phenny.say('Successfully deleted the image for ' + character + ' owned by ' + nick + ' from the database.')
+                phenny.say('Successfully deleted the image for ' + character + ' owned by ' + owner + ' from the database.')
             else:
                 phenny.say('Oh SHIT! Something went wrong!')
 delete.commands = ['del','delete','remove']
@@ -194,13 +235,16 @@ def get(phenny, input):
             and character = :character;
     ''', sqlitedata) # we don't want to check the nick; 
     # if someone else looks up a character, no match will be found.
-    url = c.fetchone()[0] # we just fetched a tuple with only one value
-    if url:
-        phenny.say('The image for ' + character + ' is ' + url)
-        return
-    else:
-        phenny.say('No image found for ' + character + '. Someone might\'ve done fucked up.')
-        return
+    try:
+        url = c.fetchone()[0] # we just fetched a tuple with only one value
+        if url:
+            phenny.say('The url for ' + character + ' is ' + url)
+            return
+        else:
+            phenny.say('No url found for ' + character + '. Someone might\'ve done fucked up.')
+            return
+    except TypeError: #A NoneType will raise an error.
+        phenny.say("Sowwy, but I don't remember anything by that name! Are you sure that you stored it? Pwease don't be mad at me! :(")
     c.close()
 get.conn = None
 get.commands = ['get']

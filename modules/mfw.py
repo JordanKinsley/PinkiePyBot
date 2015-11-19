@@ -28,11 +28,14 @@ def mlfw(phenny, input):
         return
 
     try:
-        link = 'http://mlfw.info/f/{0}/'.format(choice(results['objects'])['id'])
+        object = choice(results['objects'])
+        link = 'http://mlfw.info/f/{0}/'.format(object['id'])
+        image = 'http://mlfw.info{0}'.format(object['image'])
+        imgtitle = object['title']
     except AttributeError:
         phenny.say('No face for that')
         return
     
-    phenny.reply(link)
+    phenny.say('Here ya go ' + input.nick + ': ' + imgtitle + ' - ' + image)
 
-mlfw.rule = (['mlfw'],r'(.*)')
+mlfw.commands = ('mlfw', 'mfw')

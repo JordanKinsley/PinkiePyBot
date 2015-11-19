@@ -212,20 +212,20 @@ def f_time(self, origin, match, args):
     if len(tz) > 30: return
 
     if (TZ == 'UTC') or (TZ == 'Z'): 
-        msg = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+        msg = time.strftime('%A %B %d, %G, %I:%M:%S %p GMT', time.gmtime())
         self.msg(origin.sender, msg)
     elif r_local.match(tz): # thanks to Mark Shoulsdon (clsn)
         locale.setlocale(locale.LC_TIME, (tz[1:-1], 'UTF-8'))
-        msg = time.strftime("%A, %d %B %Y %H:%M:%SZ", time.gmtime())
+        msg = time.strftime("%A %B %d, %G, %I:%M:%S %p GMT", time.gmtime())
         self.msg(origin.sender, msg)
     elif TZ in TimeZones: 
         offset = TimeZones[TZ] * 3600
         timenow = time.gmtime(time.time() + offset)
-        msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(TZ), timenow)
+        msg = time.strftime("%A %B %d, %G, %I:%M:%S %p " + str(TZ), timenow)
         self.msg(origin.sender, msg)
     elif tz and tz[0] in ('+', '-') and 4 <= len(tz) <= 6: 
         timenow = time.gmtime(time.time() + (int(tz[:3]) * 3600))
-        msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz), timenow)
+        msg = time.strftime("%A %B %d, %G, %I:%M:%S %p " + str(tz), timenow)
         self.msg(origin.sender, msg)
     else: 
         try: t = float(tz)
@@ -241,7 +241,7 @@ def f_time(self, origin, match, args):
                 self.msg(origin.sender, origin.nick + ': ' + error)
         else: 
             timenow = time.gmtime(time.time() + (t * 3600))
-            msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz), timenow)
+            msg = time.strftime("%A %B %d, %G, %I:%M:%S %p " + str(tz), timenow)
             self.msg(origin.sender, msg)
 f_time.commands = ['t']
 f_time.name = 't'
@@ -293,8 +293,9 @@ def npl(phenny, input):
             d += dec(buf[32 + i]) * dec(str(math.pow(2, (3 - i) * 8)))
         d -= dec(2208988800)
         a, b = str(d).split('.')
-        f = '%Y-%m-%d %H:%M:%S'
-        result = datetime.datetime.fromtimestamp(d).strftime(f) + '.' + b[:6]
+        f = '%A %B %d, %G, %I:%M:%S'
+        g = ' %p '
+        result = datetime.datetime.fromtimestamp(d).strftime(f) + '.' + b[:6] + datetime.datetime.fromtimestamp(d).strftime(g)
         phenny.say(result + ' - ntp1.npl.co.uk')
     else: phenny.say('No data received, sorry')
 npl.commands = ['npl']

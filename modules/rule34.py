@@ -17,6 +17,8 @@ import web
 import json
 import xml.etree.ElementTree as ET # parsing xml not html
 from random import choice 
+import time
+import calendar
 
 def rule34(phenny, input):
     """.rule34 <query> - Rule 34: If it exists there is porn of it."""
@@ -43,13 +45,13 @@ def rule34(phenny, input):
         return
 
     try:
-        link = 'http://rule34.xxx/index.php?page=post&s=view&id={0}'.format(choice(results).attrib['id'])
+        link = (choice(results).attrib['file_url'])
     except AttributeError:
         raise GrumbleError("THE INTERNET IS BROKEN. Please try again later.")
 
     response = '!!NSFW!! -> {0} <- !!NSFW!!'.format(link)
     phenny.reply(response)
-rule34.rule = (['rule34'], r'(.*)')
+rule34.commands = ['r34', 'rule34']
 
 def e621(phenny, input):
     '''.e621 <query> - returns a random image for any query from e621.net (all links tagged as NSFW). 
@@ -71,7 +73,7 @@ def e621(phenny, input):
         if sfw:
             link = link.replace('e621','e926') #added e in case 621 is in the id
         phenny.reply(link)
-e621.rule = (['e621'], r'(.*)')
+e621.commands = ['e621']
 
 def tpc(phenny, input):
     '''.tpc <query> - returns the image for any query from twentypercentcooler.net 
@@ -93,7 +95,53 @@ def tpc(phenny, input):
     if link :
         phenny.reply(link)
 
-tpc.rule = (['tpc','twentypercentcooler','ponies'], r'(.*)')
+tpc.commands = ['tpc', 'twentypercentcooler', 'ponies']
+
+def derpibooru_search(query, phenny):
+    query = query.replace('!', '')
+    query = web.quote(query)
+    if hasattr(phenny.config, 'derpibooru_key'):
+        uri = 'https://derpibooru.org/search.json?q=' + query + '&key=' + phenny.config.derpibooru_key
+    else:
+        uri = 'https://derpibooru.org/search.json?q=' + query
+    rec_bytes = web.get(uri)
+    jsonstring = json.loads(rec_bytes)
+    dhits = jsonstring['total']
+    if dhits > 0:
+        results = choice(jsonstring['search'])
+        url = 'https:' + results['image']
+        uploader = results['uploader']
+        uploaded = results['created_at']
+        try:
+            import dateutil.parser
+            isdateutil = True
+            dt = dateutil.parser.parse(uploaded)
+            timestamp1 = calendar.timegm(dt.timetuple())
+            timestamp1 = time.gmtime(timestamp1)
+            uploadedformat = time.strftime('%A %B %d, %G at %I:%M:%S %p',timestamp1)
+        except:
+            isdateutil = False
+        if isdateutil is True:
+            return url + ' uploaded by ' + uploader + ' on ' + uploadedformat
+        else:
+            return url + ' uploaded by ' + uploader
+    else:
+        return
+
+def derpibooru(phenny, input):
+    '''Gets images from Derpibooru, needs an API key in the config to get NSFW images'''
+    query = input.group(2)
+    if not query: return phenny.reply('.derpi what?')
+
+    uri = derpibooru_search(query, phenny)
+    if uri: 
+        phenny.say("Here's what I got, " + input.nick + ": " + uri)
+        if not hasattr(phenny.bot, 'last_seen_uri'):
+            phenny.bot.last_seen_uri = {}
+        phenny.bot.last_seen_uri[input.sender] = uri
+    else: phenny.say("Sorry " + input.nick + ", I couldn't find anything for '%s'." % query)
+derpibooru.commands = ['derpi','db','derpibooru']
+derpibooru.example = '.derpi sweetie belle,fluttershy'
 
 ##
 # Helper Functions
@@ -113,6 +161,10 @@ def get_boru(phenny, site, tags):
     
     try:
         link = 'http://{0}.net/post/show/{1}/'.format(site,choice(results)['id'])
+        if site is 'e621':
+            image = (choice(results)['file_url'])
+        if site is 'twentypercentcooler':
+            image = 'http://twentypercentcooler.net' + (choice(results)['file_url'])
     except AttributeError:
         phenny.say('Oopsies, looks like the Internet is broken.')
 
@@ -120,7 +172,8 @@ def get_boru(phenny, site, tags):
     rating = tags['rating']
     if rating in ('q','e'):
         link = '!!NSFW!! -> {0} <- !!NSFW!!'.format(link)
-    return link
+        image = '!!NSFW!! -> {0} <- !!NSFW!!'.format(image)
+    return image
 
 def check_rating(phenny, sender, q, nick):
     sfw = False
