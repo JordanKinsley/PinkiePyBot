@@ -143,7 +143,8 @@ class Bot(asynchat.async_chat):
         if self.password: 
             self.write(('PASS', self.password))
         self.write(('NICK', self.nick))
-        self.write(('USER', self.user, '+iw', self.nick), self.name)
+        self.write(('USER', self.user, '-i+wB', self.nick), self.name)
+        self.write(('MODE', self.nick, '+B'))
 
     def handle_close(self): 
         self.close()

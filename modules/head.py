@@ -20,6 +20,9 @@ from datetime import timedelta
 from html.entities import name2codepoint
 import web
 from tools import deprecated
+import ast
+import calendar
+import string
 
 cj = http.cookiejar.LWPCookieJar(os.path.join(os.path.expanduser('~/.phenny'), 'cookies.lwp'))
 opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
@@ -119,26 +122,58 @@ def snarfuri(phenny, input):
         
         title = None
 
-        youtube = re.compile('http(s)?://(www.)?youtube.(com|co.uk|ca)?/watch(.*)\?v(.*)')
+        youtube = re.compile('http(s)?://((www|m).)?youtube.(com|co.uk|ca)?/watch.*\?.*v\=(.*)')
         if youtube.match(uri) or re.compile('http(s)?://youtu.be/(.*)').match(uri):
             # due to changes in how Youtube gives out API access, we need a key from the config file
-            title = get_youtube_title(uri, phenny.config.youtube_api_key)
+            if get_youtube_title(uri, phenny.config.youtube_api_key) is None:
+                phenny.say("Sorry " + input.nick + " but you need to fix your URL.")
+                return
+            else:
+                title = get_youtube_title(uri, phenny.config.youtube_api_key)
+                istags = False
 
         fimfiction = re.compile('http(s)?://(www.)?fimfiction.net/story/')
         if fimfiction.match(uri):
             title = get_story_title(uri)
+            istags = False
 
         if re.compile('http(s)?://(www.)?((e621)|(e926)).net/post/show/').match(uri): #e621 or e926 link
-            title = ouroboros('e621',uri)
+            title = ouroboros('e621',uri, phenny)
+            istags = True
+        
+        if re.compile('http(s)?://(.+)?deviantart.com/art/').match(uri):
+            title = deviantart(uri, phenny)
+            istags = False
+        
+        if re.compile('http(s)?://(.+)?deviantart.com/journal/').match(uri):
+            title = deviantart(uri, phenny)
+            istags = False
+        
+        if re.compile('http(s)?://fav.me/').match(uri):
+            title = deviantart(uri, phenny)
+            istags = False
+        
+        if re.compile('http(s)?://sta.sh/').match(uri):
+            title = deviantart(uri, phenny)
+            istags = False
+        
+        if re.compile('http(s)?://(.+)?deviantart.com/(.+)/d').match(uri):
+            title = deviantart(uri, phenny)
+            istags = False
 
         if re.compile('http(s)?://(www.)?twentypercentcooler.net/post/show/').match(uri):
-            title = ouroboros('twentypercentcooler',uri)
+            title = ouroboros('twentypercentcooler',uri, phenny)
+            istags = True
 
         if re.compile('http(s)?://(www.)?derpiboo((.ru)|(ru.org))(/images)?/').match(uri):
-            title = derpibooru(uri)
+            title = derpibooru(uri, phenny)
+            istags = True
 
         if title:
-            phenny.msg(input.sender, '[ ' + title + ' ]')
+            if istags is True:
+                phenny.say('[ ' + title + ' ]')
+            else:
+                phenny.say(title)
         else:
             title = gettitle(uri)
             if title: phenny.msg(input.sender, '[ ' + title + ' ]')
@@ -265,8 +300,9 @@ def query(vid, auth_key):
     
     req = web.get(main + vid + key + ext)
     data = json.loads(req, encoding='utf-8')
-    data = data['items'][0]
-    
+    try:
+        data = data['items'][0]
+    except IndexError: return None
     title = data['snippet']['title']
     uploader = data['snippet']['channelTitle']
     try:
@@ -293,7 +329,8 @@ def iso_8601(str_time):
     Google's Youtube data V3 API gives duration in an ISO 8601 format, e.g.
     P3DT4H30M44S. Each format of time, i.e. 3D, 4H, 30M, 44S are optional 
     in the string. P1D is just as valid as PT24H, for instance (and is the
-    actual value returned for a video exactly 24 hours, 0 minutes, and 0 seconds long
+    actual value returned for a video exactly 24 hours, 0 minutes, and 
+    0 seconds long)
     
     returns a string of the time, formatted like 3d 4h 30m 44s
     '''
@@ -388,7 +425,21 @@ def get_percentage(likes, dislikes):
         percentage = '0.00'
     return percentage
 
-def ouroboros(site, uri):
+def smart_truncate(content, phenny):
+    if phenny.config.tag_list_length:
+        suffix=' ...'
+        try:
+            length=int(phenny.config.tag_list_length)
+        except:
+            return "The tag_list_length option is not set correctly, please fix it"
+        if len(content) <= length:
+            return content
+        else:
+            return content[:length].rsplit(' ', 1)[0]+suffix
+    else:
+        return "Please set the tag_list_length option in the config"
+
+def ouroboros(site, uri, phenny):
     # e621 and twentypercentcooler use the same software
     # TODO: load tag file; compare tags, generate title
     #load a list of unimportant tags from a file. possible regex?
@@ -416,11 +467,13 @@ def ouroboros(site, uri):
     else:
         filtered = re.sub("\\b(("+")|(".join(boru.ignore_tags)+"))\\b","",tags)
         filtered = re.sub(" +"," ",filtered).strip()
-    title = re.sub('_'," ",filtered)
+    content = filtered
+    filtered = smart_truncate(content, phenny)
+    title = re.sub('_',"_",filtered)
     title = '{0} {1}'.format(rating.capitalize(),title)
     return title
 
-def derpibooru(uri):
+def derpibooru(uri, phenny):
     # TODO: research derpibooru's API and get data
     def get_id(link):
         exp = '(.*)derpiboo((.ru)|(ru.org))(/images)?/(?P<id>[0-9]*)/?'
@@ -457,6 +510,8 @@ def derpibooru(uri):
         tags = [tag for tag in tags if tag not in boru.ignore_tags]
     tag_string = ' '.join(tag.replace(' ', '_') for tag in tags)
     title = '{0} {1}'.format(ratings.title(),tag_string,artists)
+    content = title
+    title = smart_truncate(content, phenny)
     return title
 
 def get_story_title(uri):
@@ -474,6 +529,48 @@ def get_story_title(uri):
     title = title + " - " + views + " views - " + categories + ' - ' + words + ' words'
     title = title + " - Likes: " + likes + " - Dislikes: " + dislikes + " - " + percentage + "%"
     return title
+
+def deviantart(uri, phenny):
+    apiuri = 'http://backend.deviantart.com/oembed?url=' + web.quote(uri)
+    try:
+        rec_bytes = web.get(apiuri)
+    except:
+        return
+    try:
+        jsonstring = json.loads(rec_bytes)
+    except:
+        return
+    type = jsonstring['type']
+    title = jsonstring['title']
+    category = jsonstring['category']
+    author = jsonstring['author_name']
+    safe = jsonstring['safety']
+    uploaded = jsonstring['pubdate']
+    views = str(jsonstring['community']['statistics']['_attributes']['views'])
+    favs = str(jsonstring['community']['statistics']['_attributes']['favorites'])
+    try:
+        import dateutil.parser
+        isdateutil = True
+        dt = dateutil.parser.parse(uploaded)
+        timestamp1 = calendar.timegm(dt.timetuple())
+        timestamp1 = time.gmtime(timestamp1)
+        uploadedformat = time.strftime('%A %B %d, %G at %I:%M:%S %p',timestamp1)
+    except:
+        isdateutil = False
+    if re.compile('nonadult').match(safe):
+        nsfw = False
+    else:
+        nsfw = True
+    if nsfw is True:
+        if isdateutil is True:
+            return '\002!!NSFW!!\017 DeviantArt ' + title + ' by ' + author + ' - ' + category + ' - ' + type + ' uploaded on ' + uploadedformat + ' - ' + views + ' views - ' + favs + ' favs'
+        else:
+            return '\002!!NSFW!!\017 DeviantArt ' + title + ' by ' + author + ' - ' + category + ' - ' + type + ' - ' + views + ' views - ' + favs + ' favs'
+    else:
+        if isdateutil is True:
+            return 'DeviantArt ' + title + ' by ' + author + ' - ' + category + ' - ' + type + ' uploaded on ' + uploadedformat + ' - ' + views + ' views - ' + favs + ' favs'
+        else:
+            return 'DeviantArt ' + title + ' by ' + author + ' - ' + category + ' - ' + type + ' - ' + views + ' views - ' + favs + ' favs'
 
 if __name__ == '__main__': 
     print(__doc__.strip())

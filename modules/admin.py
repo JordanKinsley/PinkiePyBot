@@ -47,16 +47,22 @@ part.priority = 'high'
 part.example = '.part #example'
 
 def quit(phenny, input): 
-    """Quit from the server. This is an owner-only command."""
+    """Quit from the server. This is an owner-only command. Quit message is optional."""
     # Can only be done in privmsg by the owner
     if input.sender.startswith('#'): 
         return
     if input.owner: 
         # TODO: add optional arguments for a quit message
-        phenny.write(['QUIT'])
-        __import__('os')._exit(0)
+        a = input.group(2)
+        if a: 
+            phenny.write(['QUIT', a])
+            __import__('os')._exit(0)
+        else:
+            phenny.write(['QUIT'])
+            __import__('os')._exit(0)
 quit.commands = ['quit']
 quit.priority = 'high'
+quit.example = '.quit message'
 
 def msg(phenny, input): 
     # Can only be done in privmsg by an admin
@@ -87,7 +93,7 @@ def config_get(phenny, input):
         return
     
     config_to_get = input.group(2).split(' ')[0]
-    if config_to_get.lower() == 'password':
+    if config_to_get.lower() in ('password','youtube_api_key','serverpass','derpibooru_key'):
         phenny.say("Nuh uh! " + phenny.config.owner + " says that's a super-duper secret, and I promised to keep it!")
         return
     config_option = ""
@@ -100,7 +106,7 @@ config_get.rule = (['config_get','c_get'], r'(.*)')
 config_get.priority = 'low'
 
 # options to never change
-donotchange = ['nick','host','port','ssl','ipv6','owner','password']
+donotchange = ['nick','host','port','ssl','ipv6','owner','password','youtube_api_key','derpibooru_key']
 
 def config_set(phenny, input):
     """Set a config option for phenny while the bot is running, ignoring options that can't or shouldn't be changed."""
