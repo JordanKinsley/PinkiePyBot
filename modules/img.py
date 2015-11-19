@@ -193,7 +193,7 @@ def delete(phenny, input):
     
     char_entry = get_character(phenny, character, channel)
     if char_entry is None:
-        phenny.say("Sowwy, but I don't remember anything by that name! Are you sure that you stored it? Pwease don't be mad at me! :(")
+        phenny.say("Sorry, but I don't remember anything by that name! Are you sure that you stored it? Please don't be mad at me! :(")
         return
     else:
         owner = char_entry[1]
@@ -244,7 +244,7 @@ def get(phenny, input):
             phenny.say('No url found for ' + character + '. Someone might\'ve done fucked up.')
             return
     except TypeError: #A NoneType will raise an error.
-        phenny.say("Sowwy, but I don't remember anything by that name! Are you sure that you stored it? Pwease don't be mad at me! :(")
+        phenny.say("Sorry, but I don't remember anything by that name! Are you sure that you stored it? Please don't be mad at me! :(")
     c.close()
 get.conn = None
 get.commands = ['get']
