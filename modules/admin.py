@@ -93,25 +93,7 @@ def config_get(phenny, input):
         return
     
     config_to_get = input.group(2).split(' ')[0]
-    if config_to_get.lower() == 'password':
-        phenny.say("Nuh uh! " + phenny.config.owner + " says that's a super-duper secret, and I promised to keep it!")
-        return
-    elif config_to_get.lower() == 'f_list_password':
-        phenny.say("Nuh uh! " + phenny.config.owner + " says that's a super-duper secret, and I promised to keep it!")
-        return
-    elif config_to_get.lower() == 'youtube_api_key':
-        phenny.say("Nuh uh! " + phenny.config.owner + " says that's a super-duper secret, and I promised to keep it!")
-        return
-    elif config_to_get.lower() == 'wunderground_api_key':
-        phenny.say("Nuh uh! " + phenny.config.owner + " says that's a super-duper secret, and I promised to keep it!")
-        return
-    elif config_to_get.lower() == 'wordnik_api_key':
-        phenny.say("Nuh uh! " + phenny.config.owner + " says that's a super-duper secret, and I promised to keep it!")
-        return
-    elif config_to_get.lower() == 'serverpass':
-        phenny.say("Nuh uh! " + phenny.config.owner + " says that's a super-duper secret, and I promised to keep it!")
-        return
-    elif config_to_get.lower() == 'derpibooru_key':
+    if config_to_get.lower() in ('password','youtube_api_key','serverpass','derpibooru_key'):
         phenny.say("Nuh uh! " + phenny.config.owner + " says that's a super-duper secret, and I promised to keep it!")
         return
     config_option = ""
@@ -124,7 +106,7 @@ config_get.rule = (['config_get','c_get'], r'(.*)')
 config_get.priority = 'low'
 
 # options to never change
-donotchange = ['nick','host','port','ssl','ipv6','owner','password']
+donotchange = ['nick','host','port','ssl','ipv6','owner','password','youtube_api_key','derpibooru_key']
 
 def config_set(phenny, input):
     """Set a config option for phenny while the bot is running, ignoring options that can't or shouldn't be changed."""
