@@ -432,7 +432,10 @@ def smart_truncate(content, phenny):
             try:
                 length=int(phenny.config.tag_list_length)
             except:
-                return "The tag_list_length option is not set correctly, please fix it"
+                try: 
+                    length=int(phenny.config.tag_list_length[0])
+                except:
+                    return "The tag_list_length option is not set correctly, please fix it"
             if len(content) <= length:
                 return content
             else:
