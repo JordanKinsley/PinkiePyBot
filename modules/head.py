@@ -426,16 +426,17 @@ def get_percentage(likes, dislikes):
     return percentage
 
 def smart_truncate(content, phenny):
-    try phenny.config.tag_list_length:
-        suffix=' ...'
-        try:
-            length=int(phenny.config.tag_list_length)
-        except:
-            return "The tag_list_length option is not set correctly, please fix it"
-        if len(content) <= length:
-            return content
-        else:
-            return content[:length].rsplit(' ', 1)[0]+suffix
+    try:
+        if phenny.config.tag_list_length:
+            suffix=' ...'
+            try:
+                length=int(phenny.config.tag_list_length)
+            except:
+                return "The tag_list_length option is not set correctly, please fix it"
+            if len(content) <= length:
+                return content
+            else:
+                return content[:length].rsplit(' ', 1)[0]+suffix
     except:
         return "Please set the tag_list_length option in the config"
 
