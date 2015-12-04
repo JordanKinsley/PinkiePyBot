@@ -173,7 +173,7 @@ def snarfuri(phenny, input):
             if istags is True:
                 phenny.say('[ ' + title + ' ]')
             else:
-                phenny.say(title)
+                phenny.say('[ ' + title + ' ]')
         else:
             title = gettitle(uri)
             if title: phenny.msg(input.sender, '[ ' + title + ' ]')
@@ -426,7 +426,7 @@ def get_percentage(likes, dislikes):
     return percentage
 
 def smart_truncate(content, phenny):
-    if phenny.config.tag_list_length:
+    try phenny.config.tag_list_length:
         suffix=' ...'
         try:
             length=int(phenny.config.tag_list_length)
@@ -436,7 +436,7 @@ def smart_truncate(content, phenny):
             return content
         else:
             return content[:length].rsplit(' ', 1)[0]+suffix
-    else:
+    except:
         return "Please set the tag_list_length option in the config"
 
 def ouroboros(site, uri, phenny):
