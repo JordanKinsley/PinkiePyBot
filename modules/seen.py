@@ -51,7 +51,6 @@ def seen(phenny, input):
     inputnick = inputnick.rstrip()
     
     seen_db = os.path.join(os.path.expanduser('~/.phenny'), 'seen.db')
-    seen_conn = db_connect(seen_db)
     conn = db_connect(seen_db)
     c = conn.cursor()
     query = (inputnick,)
@@ -96,6 +95,8 @@ def seen(phenny, input):
         elif event == "QUIT":
             phenny.say(nick + ' was last seen quitting with message "' + message + '" on ' + seentime)
     c.close()
+    conn.commit()
+    conn.close()
 seen.commands = ['seen']
 seen.example = ".seen somenick"
 
@@ -107,13 +108,24 @@ def seenstore(phenny, input, event):
     else:
         message = input.group()
     seen_db = os.path.join(os.path.expanduser('~/.phenny'), 'seen.db')
-    seen_conn = db_connect(seen_db)
     conn = db_connect(seen_db)
     c = conn.cursor()
     entry = (nick, channel, message, event)
-    c.execute("INSERT OR REPLACE INTO seen(nick, channel, message, event) VALUES(?, ?, ?, ?)", entry)
-    conn.commit()
+    try:
+        c.execute("INSERT OR REPLACE INTO seen(nick, channel, message, event) VALUES(?, ?, ?, ?)", entry)
+    except OperationalError:
+        if os.path.join(os.path.expanduser('~/.phenny'), 'seen.db-journal'):
+            # roll back any changes, then close and reopen the database; 
+            # research suggests that starting a new SQLite process can fix
+            # journalled DB files, e.g. after a crash
+            conn.rollback()
+            conn.close()
+            conn = db_connect(seen_db)
+            if not conn.execute("PRAGMA integrity_check;").fetchall() is [('ok',)]:
+                conn.rollback()
+                conn.close()
     c.close()
+    conn.commit()
     conn.close()
 
 def seenmsg(phenny, input):
