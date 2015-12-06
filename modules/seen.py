@@ -110,9 +110,11 @@ def seenstore(phenny, input, event):
     seen_db = os.path.join(os.path.expanduser('~/.phenny'), 'seen.db')
     conn = db_connect(seen_db)
     c = conn.cursor()
+    
+    statement = "INSERT OR REPLACE INTO seen(nick, channel, message, event) VALUES(?, ?, ?, ?)"
     entry = (nick, channel, message, event)
     try:
-        c.execute("INSERT OR REPLACE INTO seen(nick, channel, message, event) VALUES(?, ?, ?, ?)", entry)
+        c.execute(statement, entry)
     except OperationalError:
         if os.path.join(os.path.expanduser('~/.phenny'), 'seen.db-journal'):
             # roll back any changes, then close and reopen the database; 
@@ -124,6 +126,7 @@ def seenstore(phenny, input, event):
             if not conn.execute("PRAGMA integrity_check;").fetchall() is [('ok',)]:
                 conn.rollback()
                 conn.close()
+            c.execute(statement, entry)
     c.close()
     conn.commit()
     conn.close()
