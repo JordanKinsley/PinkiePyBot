@@ -115,7 +115,7 @@ def seenstore(phenny, input, event):
     entry = (nick, channel, message, event)
     try:
         c.execute(statement, entry)
-    except OperationalError:
+    except lite.OperationalError:
         if os.path.join(os.path.expanduser('~/.phenny'), 'seen.db-journal'):
             # roll back any changes, then close and reopen the database; 
             # research suggests that starting a new SQLite process can fix
@@ -133,7 +133,11 @@ def seenstore(phenny, input, event):
 
 def seenmsg(phenny, input):
     event = "PRIVMSG"
-    seenstore(phenny, input, event)
+    try:
+        seenstore(phenny, input, event)
+    except:
+        conn = db_connect(os.path.join(os.path.expanduser('~/.phenny'), 'seen.db'))
+        conn.close()
 seenmsg.rule = r'(.*)'
 seenmsg.priority = 'low'
 
