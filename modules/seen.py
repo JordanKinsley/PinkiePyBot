@@ -133,6 +133,7 @@ def seenstore(phenny, input, event):
 
 def seenmsg(phenny, input):
     event = "PRIVMSG"
+    # if we get more errors, screw it and try to unlock the DB to try again
     try:
         seenstore(phenny, input, event)
     except:

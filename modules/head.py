@@ -134,8 +134,11 @@ def snarfuri(phenny, input):
 
         fimfiction = re.compile('http(s)?://(www.)?fimfiction.net/story/')
         if fimfiction.match(uri):
-            title = get_story_title(uri)
-            istags = False
+            try:
+                title = get_story_title(uri)
+                istags = False
+            except KeyError:
+                title = gettitle(uri)
 
         if re.compile('http(s)?://(www.)?((e621)|(e926)).net/post/show/').match(uri): #e621 or e926 link
             title = ouroboros('e621',uri, phenny)
