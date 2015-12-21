@@ -8,15 +8,24 @@ This module will let Pinkie inform users of the best pony or confirm or
 deny their suspected best ponies. 
 '''
 
-import random, re, sys, time
+import random, re, sys, time, sqlite3
 
-post_nicklist_nicks = []
+nicks_in_mem = sqlite3.connect(':memory:', check_same_thread = False)
 ponies = ('Twilight Sparkle','Rarity','me','Applejack','Fluttershy','Sunset Shimmer', 'Maud Pie')
 ponies_alt = ('Princess Celestia','Princess Luna','Princess Cadance','Shining Armor','Roseluck','Trixie','Sweetie Belle','Apple Bloom','Scootaloo','Mr Cake','Mrs Cake','Pound Cake','Pumpkin Cake','Granny Smith','Big Macintosh','Lyra','Bon Bon')
 not_best_ponies = ('Flash Sentry')
 not_ponies = ('Discord','Philomena','Spike','Gilda','Gummy')
 pony_map = {'Twilight': 'Twilight Sparkle', 'Rainbow': 'Rainbow Dash', 'Dash': 'Rainbow Dash', 'Pinkie': 'Pinkie Pie', 'Sunset': 'Sunset Shimmer', 'Bland Sentry': 'Flash Sentry', 'Flash': 'Flash Sentry', 'Celestia': 'Princess Celestia', 'Luna': 'Princess Luna', 'Cadance': 'Princess Cadance', 'Mr. Cake': 'Mr Cake', 'Mrs. Cake': 'Mrs Cake', 'Big Mac': 'Big Macintosh'}
 superlatives = ('cool', 'rad', 'sweet', 'awesome', 'amazing', 'cool', 'much the best')
+
+def setup(phenny):
+    nicks_in_mem = sqlite3.connect(':memory:', check_same_thread = False)
+    nicks_in_mem.execute('''
+        create table if not exists nicks(
+            nick    varchar(31) NOT NULL PRIMARY KEY
+        );''')
+    nicks_in_mem.commit()
+setup.thread = False
 
 def best_pony(phenny, input):
     if input.nick in phenny.config.user_ignore:
@@ -59,13 +68,20 @@ def is_best_pony(phenny, input):
     if phenny.config.debug:
         print("sleeping 1/2 sec", file=sys.stderr)
         print("channel_nicks: " + str(phenny.channel_nicks), file=sys.stderr)
-        print("post_nicklist_nicks: " + str(post_nicklist_nicks), file=sys.stderr)
     time.sleep(0.5)
     while more_nicks:
         if phenny.config.debug:
             print("Waiting until 366 for " + input.sender, file=sys.stderr)
         time.sleep(0.5)
     channel_nicklist = phenny.channel_nicks.copy()
+    if not channel_nicklist:
+        try:
+            for row in nicks_in_mem.execute('SELECT nick FROM nicks'):
+                channel_nicklist.append(row[0])
+            if phenny.config.debug:
+                print("using memory DB for nicklist", file=sys.stderr)
+        except sqlite3.OperationalError:
+            pass
     if phenny.config.debug:
         print("channel_nicks: " + str(phenny.channel_nicks), file=sys.stderr)
     if phenny.config.debug:
@@ -80,6 +96,7 @@ def is_best_pony(phenny, input):
             phenny.say("Oh yeah! " + alleged_best_pony + " is the best! Rock on!")
         else:
             phenny.say("Yeah, " + alleged_best_pony + " is pretty " + random.choice(superlatives) + "!")
+        channel_nicklist.clear()
         return
     if alleged_best_pony in pony_map:
         alleged_best_pony = pony_map[alleged_best_pony]
@@ -124,7 +141,15 @@ def names_on_353(phenny, input):
     if phenny.config.debug:
         print("event 353 nicks: " + str(e353_return), file=sys.stderr)
     phenny.channel_nicks.extend(e353_return)
-    post_nicklist_nicks = e353_return.copy()
+    
+    try:
+        nicks_in_mem.execute('''DELETE FROM nicks;''')
+        for nick in e353_return:
+            nicks_in_mem.execute('''INSERT INTO nicks(nick) VALUES (?); ''', (nick,))
+        nicks_in_mem.commit()
+    except sqlite3.OperationalError:
+        pass
+    
     if phenny.config.debug:
         print("channel_nicks in names_on_353: " + str(phenny.channel_nicks), file=sys.stderr)
 names_on_353.event = '353'
