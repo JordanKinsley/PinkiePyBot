@@ -147,7 +147,7 @@ def snugglefucks(phenny, input):
     if input.nick in phenny.config.user_ignore:
         return
     if input.sender in phenny.config.nsfw:
-        sfresponse = ('Oooooh, yes!','Ah, that feels so good!','Mmm, ' + input.nick + ', that\'s the best!', 'Oh yeah, do you like that? Huh, huh, do ya?','\x01ACTION gasps loudly and then flashes bedroom eyes at ' + input.nick + '!\x01','\x01ACTIO wiggles her rump and bites her bottom lip!N\x01','\x01ACTION flicks her tail aside to give ' + input.nick + ' a little peek!\x01')
+        sfresponse = ('Oooooh, yes!','Ah, that feels so good!','Mmm, ' + input.nick + ', that\'s the best!', 'Oh yeah, do you like that? Huh, huh, do ya?','\x01ACTION gasps loudly and then flashes bedroom eyes at ' + input.nick + '!\x01','\x01ACTION wiggles her rump and bites her bottom lip!\x01','\x01ACTION flicks her tail aside to give ' + input.nick + ' a little peek!\x01')
         phenny.say(random.choice(sfresponse))
     else:
         phenny.say("Hey, " + input.nick + "! Behave. Shame on you.")
