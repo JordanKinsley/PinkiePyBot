@@ -170,7 +170,7 @@ def get_boru(phenny, site, tags):
 
     tags = results[0]
     rating = tags['rating']
-    if rating in ('q','e'):
+    if rating in ('q','e','questionable','explicit'):
         link = '!!NSFW!! -> {0} <- !!NSFW!!'.format(link)
         image = '!!NSFW!! -> {0} <- !!NSFW!!'.format(image)
     return image

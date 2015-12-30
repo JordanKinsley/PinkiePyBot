@@ -113,7 +113,7 @@ def smiles(phenny, input):
     if input.nick in phenny.config.user_ignore:
         return
     # \x01ACTION smiles back!\x01 gets extra "weight" because it's a good response
-    smilesresponse = random.choice(('Aww, I love to see my friends smile!','\x01ACTION smiles back!\x01','#youtubelink','\x01ACTION grins!\x01','\x01ACTION claps her hooves together!\x01','\x01ACTION smiles back!\x01'))
+    smilesresponse = random.choice(('Aww, I love to see my friends smile!','\x01ACTION smiles back!\x01','https://www.youtube.com/watch?v=lQKaAlMNvm8 - [ My Little Pony - Smile Song (Official Music Video) ]','\x01ACTION grins!\x01','\x01ACTION claps her hooves together!\x01','\x01ACTION smiles back!\x01'))
     phenny.say(smilesresponse)
 smiles.rule = r'(\x01ACTION)? (?i)smiles (?i)(at|with|to|because of) (?i)(I|Bli|Pi)nkie(Pie)?(Bot)?'
 
@@ -143,6 +143,16 @@ def pokes(phenny, input):
     phenny.say(random.choice(pokesresponse))
 pokes.rule = r'(\x01ACTION)? (?i)(poke|boop)s (?i)(I|Bli|Pi)nkie(Pie)?(Bot)?'
 
+def snugglefucks(phenny, input):
+    if input.nick in phenny.config.user_ignore:
+        return
+    if input.sender in phenny.config.nsfw:
+        sfresponse = ('Oooooh, yes!','Ah, that feels so good!','Mmm, ' + input.nick + ', that\'s the best!', 'Oh yeah, do you like that? Huh, huh, do ya?')
+        phenny.say(random.choice(sfresponse))
+    else:
+        phenny.say("Hey, " + input.nick + "! Behave. Shame on you.")
+snugglefucks.rule = r'(\x01ACTION)? (?i)(snugglefuck|fondle|molest|grope|fuck|sexe|spank)(?i)(s|(e)?d)? (?i)(I|Bli|Pi)nkie(Pie)?(Bot)?'
+
 # TODO: add these actions and appropriate responses
 '''
 Actions to add: 
@@ -155,7 +165,6 @@ Actions to add:
 * flank-smack *
 * how are you *
 * gives a massage to *
-* fondles/molests/gropes **
 '''
 
 # action string '\x01ACTION\x01'
