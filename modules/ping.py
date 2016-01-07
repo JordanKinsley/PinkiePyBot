@@ -158,7 +158,7 @@ def bondage(phenny, input):
         return
     attractresponse = '.'
     if input.nick in saucyreplies:
-        attractresponse = random.choice(('Oooh, I was hoping for this. ;)','Tighter!','Something new to try!','\x01ACTION moans in pleasure','\x01ACTION mews at ' + input.nick + '.\x01'))
+        attractresponse = random.choice(('Oooh, I was hoping for this. ;)','Tighter!','Something new to try!','\x01ACTION moans in pleasure!\x01','\x01ACTION mews at ' + input.nick + '.\x01'))
     else: 
         attractresponse = random.choice(('I don\'t like you that way...', 'Sorry, I\'m not like that.', 'Flattering, but no.', 'Don\'t even try it.', 'I\'d rather just be friends.', '...'))
     phenny.say(attractresponse)
