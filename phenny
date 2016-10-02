@@ -32,6 +32,10 @@ def create_default_config(fn):
     host = 'irc.example.net'
     port = 6667
     ssl = False
+    # Obtain a key from Youtube to access their V3 API
+    youtube_api_key = None
+    # Derpibooru needs a key to access NSFW images: check your account settings
+    derpibooru_key = None
     # uncomment the next line to use a custom ca_certs file
     # ca_certs = '/home/phenny/.phenny/custom.crt' 
     # Set to true to turn on certain debugging messages like raw message output

@@ -1,49 +1,164 @@
 #!/usr/bin/env python
 """
-seen.py - Phenny Seen Module
-Copyright 2008, Sean B. Palmer, inamidst.com
-Licensed under the Eiffel Forum License 2.
-
-http://inamidst.com/phenny/
+seen.py - Phenny seen module
 """
-
+import sqlite3 as lite
+import os
+import datetime
 import time
-from tools import deprecated
+import re
 
-@deprecated
-def f_seen(self, origin, match, args): 
-    """.seen <nick> - Reports when <nick> was last seen."""
-    if origin.sender == '#talis': return
-    nick = match.group(2).lower()
-    if not hasattr(self, 'seen'): 
-        return self.msg(origin.sender, '?')
-    if nick in self.seen: 
-        channel, t = self.seen[nick]
-        t = time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime(t))
+def db_connect(db):
+    return lite.connect(db, check_same_thread = False, detect_types=lite.PARSE_DECLTYPES)
 
-        msg = "I last saw %s at %s on %s" % (nick, t, channel)
-        self.msg(origin.sender, str(origin.nick) + ': ' + msg)
-    else: self.msg(origin.sender, "Sorry, I haven't seen %s around." % nick)
-f_seen.rule = (['seen'], r'(\S+)')
+def setup(phenny):
+    seen_db = os.path.join(os.path.expanduser('~/.phenny'), 'seen.db')
+    seen_conn = db_connect(seen_db)
+    c = seen_conn.cursor()
+    c.execute('''create table if not exists seen(
+        nick    varchar(31) NOT NULL PRIMARY KEY,
+        channel varchar(31) NOT NULL,
+        message text,
+        event   varchar(10) NOT NULL,
+        time    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        );''')
+    c.close()
+    seen_conn.commit()
+    seen_conn.close()
+setup.thread = False
 
-@deprecated
-def f_note(self, origin, match, args): 
-    def note(self, origin, match, args): 
-        if not hasattr(self.bot, 'seen'): 
-            self.bot.seen = {}
-        if origin.sender.startswith('#'): 
-            # if origin.sender == '#inamidst': return
-            self.seen[origin.nick.lower()] = (origin.sender, time.time())
+def smart_truncate(content):
+    suffix='...'
+    length=int(150)
+    if len(content) <= length:
+        return content
+    else:
+        return content[:length].rsplit(' ', 1)[0]+suffix
 
-        # if not hasattr(self, 'chanspeak'): 
-        #     self.chanspeak = {}
-        # if (len(args) > 2) and args[2].startswith('#'): 
-        #     self.chanspeak[args[2]] = args[0]
+def seen(phenny, input):
+    """Gives when a user was last seen."""
+    inputnick = input.group(2)
+    regex = re.compile("\x03(?:\d{1,2}(?:,\d{1,2})?)?", re.UNICODE)
+    inputnick = regex.sub("", inputnick)
+    inputnick = inputnick.replace('\x0f','')
+    inputnick = inputnick.replace('\002','')
+    inputnick = inputnick.replace('\010','')
+    inputnick = inputnick.replace('\037','')
+    inputnick = inputnick.replace('\017','')
+    inputnick = inputnick.replace('\026','')
+    inputnick = inputnick.replace('\007','')
+    inputnick = inputnick.replace('\035','')
+    inputnick = inputnick.rstrip()
+    
+    seen_db = os.path.join(os.path.expanduser('~/.phenny'), 'seen.db')
+    conn = db_connect(seen_db)
+    c = conn.cursor()
+    query = (inputnick,)
+    c.execute("SELECT * FROM seen WHERE nick LIKE ?;", query)
+    resultsun = c.fetchall()
+    try:
+        results = resultsun[0]
+    except:
+        nick = None
+    
+    try:
+        nick = results[0]
+        channel = results[1]
+        message = results[2]
+        event = results[3]
+        seentimeun = results[4]
+    except:
+        nick = None
+    if not inputnick:
+        phenny.say ("\x01ACTION pokes " + input.nick + "\x01")
+        phenny.say("Are you broken?")
+        phenny.say("I need a nick for that command")
+    elif input.nick == inputnick:
+        phenny.say("Silly, that's you!")
+    elif inputnick == phenny.nick:
+        phenny.say("Silly, that's me!")
+    elif not nick:
+        phenny.say("Sorry I haven't seen " + inputnick)
+    else:
+        
+        seentime = seentimeun.strftime('%A %B %d, %G at %I:%M:%S %p GMT')
+        message = message.replace('\x01ACTION','/me')
+        message = message.replace('\x01','')
+        message = smart_truncate(message)
+        message = message + '\017'
+        if event == "PRIVMSG":
+            phenny.say(nick + " was last seen in " + channel + ' saying "' + message + '" on ' + seentime)
+        elif event == "JOIN":
+            phenny.say(nick + " was last seen joining " + channel + " on " + seentime)
+        elif event == "PART":
+            phenny.say(nick + " was last seen leaving " + channel + ' with message "' + message + '" on ' + seentime)
+        elif event == "QUIT":
+            phenny.say(nick + ' was last seen quitting with message "' + message + '" on ' + seentime)
+    c.close()
+    conn.commit()
+    conn.close()
+seen.commands = ['seen']
+seen.example = ".seen somenick"
 
-    try: note(self, origin, match, args)
-    except Exception as e: print(e)
-f_note.rule = r'(.*)'
-f_note.priority = 'low'
+def seenstore(phenny, input, event):
+    nick = input.nick
+    channel = input.sender
+    if event == "JOIN":
+        message = None
+    else:
+        message = input.group()
+    seen_db = os.path.join(os.path.expanduser('~/.phenny'), 'seen.db')
+    conn = db_connect(seen_db)
+    c = conn.cursor()
+    
+    statement = "INSERT OR REPLACE INTO seen(nick, channel, message, event) VALUES(?, ?, ?, ?)"
+    entry = (nick, channel, message, event)
+    try:
+        c.execute(statement, entry)
+    except lite.OperationalError:
+        if os.path.join(os.path.expanduser('~/.phenny'), 'seen.db-journal'):
+            # roll back any changes, then close and reopen the database; 
+            # research suggests that starting a new SQLite process can fix
+            # journalled DB files, e.g. after a crash
+            conn.rollback()
+            conn.close()
+            conn = db_connect(seen_db)
+            if not conn.execute("PRAGMA integrity_check;").fetchall() is [('ok',)]:
+                conn.rollback()
+                conn.close()
+            c.execute(statement, entry)
+    c.close()
+    conn.commit()
+    conn.close()
 
-if __name__ == '__main__': 
-    print(__doc__.strip())
+def seenmsg(phenny, input):
+    event = "PRIVMSG"
+    # if we get more errors, screw it and try to unlock the DB to try again
+    try:
+        seenstore(phenny, input, event)
+    except:
+        conn = db_connect(os.path.join(os.path.expanduser('~/.phenny'), 'seen.db'))
+        conn.close()
+seenmsg.rule = r'(.*)'
+seenmsg.priority = 'low'
+
+#def seenjoin(phenny, input):
+#    event = "JOIN"
+#    seenstore(phenny, input, event)
+#seenjoin.event = 'JOIN'
+#seenjoin.rule = r'(.*)'
+#seenjoin.priority = 'low'
+
+#def seenquit(phenny, input):
+#    event = "QUIT"
+#    seenstore(phenny, input, event)
+#seenquit.event = 'QUIT'
+#seenquit.rule = r'(.*)'
+#seenquit.priority = 'low'
+
+#def seenpart(phenny, input):
+#    event = "PART"
+#    seenstore(phenny, input, event)
+#seenpart.event = 'PART'
+#seenpart.rule = r'(.*)'
+#seenpart.priority = 'low'

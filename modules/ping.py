@@ -113,7 +113,7 @@ def smiles(phenny, input):
     if input.nick in phenny.config.user_ignore:
         return
     # \x01ACTION smiles back!\x01 gets extra "weight" because it's a good response
-    smilesresponse = random.choice(('Aww, I love to see my friends smile!','\x01ACTION smiles back!\x01','#youtubelink','\x01ACTION grins!\x01','\x01ACTION claps her hooves together!\x01','\x01ACTION smiles back!\x01'))
+    smilesresponse = random.choice(('Aww, I love to see my friends smile!','\x01ACTION smiles back!\x01','https://www.youtube.com/watch?v=lQKaAlMNvm8 - [ My Little Pony - Smile Song (Official Music Video) ]','\x01ACTION grins!\x01','\x01ACTION claps her hooves together!\x01','\x01ACTION smiles back!\x01'))
     phenny.say(smilesresponse)
 smiles.rule = r'(\x01ACTION)? (?i)smiles (?i)(at|with|to|because of) (?i)(I|Bli|Pi)nkie(Pie)?(Bot)?'
 
@@ -143,6 +143,27 @@ def pokes(phenny, input):
     phenny.say(random.choice(pokesresponse))
 pokes.rule = r'(\x01ACTION)? (?i)(poke|boop)s (?i)(I|Bli|Pi)nkie(Pie)?(Bot)?'
 
+def snugglefucks(phenny, input):
+    if input.nick in phenny.config.user_ignore:
+        return
+    if input.sender in phenny.config.nsfw:
+        sfresponse = ('Oooooh, yes!','Ah, that feels so good!','Mmm, ' + input.nick + ', that\'s the best!', 'Oh yeah, do you like that? Huh, huh, do ya?','\x01ACTION gasps loudly and then flashes bedroom eyes at ' + input.nick + '!\x01','\x01ACTION wiggles her rump and bites her bottom lip!\x01','\x01ACTION flicks her tail aside to give ' + input.nick + ' a little peek!\x01')
+        phenny.say(random.choice(sfresponse))
+    else:
+        phenny.say("Hey, " + input.nick + "! Behave. Shame on you.")
+snugglefucks.rule = r'(\x01ACTION)? (?i)(snugglefuck|fondle|molest|grope|fuck|sexe|spank)(?i)(s|(e)?d)? (?i)(I|Bli|Pi)nkie(Pie)?(Bot)?'
+
+def bondage(phenny, input): 
+    if input.nick in phenny.config.user_ignore:
+        return
+    attractresponse = '.'
+    if input.nick in saucyreplies:
+        attractresponse = random.choice(('Oooh, I was hoping for this. ;)','Tighter!','Something new to try!','\x01ACTION moans in pleasure!\x01','\x01ACTION mews at ' + input.nick + '.\x01'))
+    else: 
+        attractresponse = random.choice(('I don\'t like you that way...', 'Sorry, I\'m not like that.', 'Flattering, but no.', 'Don\'t even try it.', 'I\'d rather just be friends.', '...'))
+    phenny.say(attractresponse)
+bondage.rule = r'(?i)(\x01ACTION ties (I|Bli|Pi)nkie(Pie)?(Bot)?) up'
+
 # TODO: add these actions and appropriate responses
 '''
 Actions to add: 
@@ -155,7 +176,6 @@ Actions to add:
 * flank-smack *
 * how are you *
 * gives a massage to *
-* fondles/molests/gropes **
 '''
 
 # action string '\x01ACTION\x01'
