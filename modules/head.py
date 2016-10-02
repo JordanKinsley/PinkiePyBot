@@ -488,7 +488,7 @@ def derpibooru(uri, phenny):
     id = get_id(uri)
     if not id:
         return gettitle(uri)
-    json_data = web.get('https://derpiboo.ru/{0}.json'.format(id))
+    json_data = web.get('https://derpibooru.org/{0}.json'.format(id))
     postdata = json.loads(json_data, encoding='utf-8')
     tags = postdata['tags'].split(', ')
     
